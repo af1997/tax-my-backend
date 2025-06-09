@@ -22,7 +22,7 @@ export default function Feedback() {
     e.preventDefault();
     setStatus("loading");
     try {
-      await fetch("https://hooks.zapier.com/hooks/catch/9663424/uyha48y/", {
+      await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, description })
