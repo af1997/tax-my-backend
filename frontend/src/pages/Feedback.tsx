@@ -1,23 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Feedback() {
   const [type, setType] = useState("bug");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const webhookUrl =
-    import.meta.env.VITE_FEEDBACK_WEBHOOK_URL ||
-    "https://hooks.zapier.com/hooks/catch/9663424/uyha48y/";
+  const [entries, setEntries] = useState<{
+    id: number;
+    type: string;
+    description: string;
+    createdAt: string;
+  }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/feedback")
+      .then((res) => res.json())
+      .then(setEntries)
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!webhookUrl) return;
     setStatus("loading");
     try {
-      await fetch(webhookUrl, {
+      await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, description })
       });
+      setEntries((prev) => [
+        { id: Date.now(), type, description, createdAt: new Date().toISOString() },
+        ...prev
+      ]);
       setDescription("");
       setType("bug");
       setStatus("success");
@@ -65,6 +78,28 @@ export default function Feedback() {
           <p className="text-red-600">Something went wrong. Please try again.</p>
         )}
       </form>
+      {entries.length > 0 && (
+        <table className="mt-8 w-full border">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border p-2 text-left">Type</th>
+              <th className="border p-2 text-left">Description</th>
+              <th className="border p-2 text-left">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((f) => (
+              <tr key={f.id} className="border-t">
+                <td className="p-2 border">{f.type}</td>
+                <td className="p-2 border">{f.description}</td>
+                <td className="p-2 border">
+                  {new Date(f.createdAt).toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
