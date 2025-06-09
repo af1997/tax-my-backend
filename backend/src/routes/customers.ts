@@ -1,5 +1,5 @@
 import { Router } from "express";
-import prisma from "../prismaClient.ts";   // ← path to the Prisma client helper
+import prisma from "../prismaClient";
 
 const r = Router();
 
