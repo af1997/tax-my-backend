@@ -26,7 +26,31 @@ r.post("/", async (req, res) => {
     type: string;
     description: string;
   };
-  await prisma.$executeRaw`INSERT INTO Feedback(type, description) VALUES (${type}, ${description})`;
+  try {
+    await prisma.$executeRaw`INSERT INTO Feedback(type, description) VALUES (${type}, ${description})`;
+  } catch (err) {
+    console.error("Failed to store feedback", err);
+    return res.status(500).json({ ok: false, error: "Failed to store feedback" });
+  }
+
+  const webhook = process.env.FEEDBACK_WEBHOOK_URL;
+  if (webhook) {
+    try {
+      const resp = await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, description }),
+      });
+      if (!resp.ok) {
+        console.error("Webhook responded with", resp.status);
+        return res.status(500).json({ ok: false, error: "Webhook request failed" });
+      }
+    } catch (err) {
+      console.error("Error sending to webhook", err);
+      return res.status(500).json({ ok: false, error: "Webhook request failed" });
+    }
+  }
+
   res.json({ ok: true });
 });
 
