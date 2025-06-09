@@ -1,0 +1,15 @@
+{
+  "name": "tax_my_backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
+    "build": "pnpm --filter backend build && pnpm --filter frontend build",
+    "prisma:generate": "pnpm --filter backend exec prisma generate",
+    "prisma:migrate": "pnpm --filter backend exec prisma migrate dev --name init"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}

@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"            // local dev (single file)
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?  @unique
+  phone     String?
+  address   String?
+  invoices  Invoice[]
+  jobs      Job[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Job {
+  id          Int       @id @default(autoincrement())
+  title       String
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  customerId  Int
+  materials   Material[]
+  timeEntries TimeEntry[]
+  invoices    Invoice[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Material {
+  id        Int     @id @default(autoincrement())
+  job       Job     @relation(fields: [jobId], references: [id])
+  jobId     Int
+  name      String
+  quantity  Int
+  unitCost  Float    // OK for dev; switch to Decimal in Postgres
+  createdAt DateTime @default(now())
+}
+
+model TimeEntry {
+  id        Int     @id @default(autoincrement())
+  job       Job     @relation(fields: [jobId], references: [id])
+  jobId     Int
+  hours     Float
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model Invoice {
+  id         Int      @id @default(autoincrement())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId Int
+  job        Job?     @relation(fields: [jobId], references: [id])
+  jobId      Int?
+  issueDate  DateTime @default(now())
+  dueDate    DateTime
+  status     String   @default("PENDING") // change to enum later
+  lineItems  String   // JSON text; switch to Json in Postgres
+  total      Float
+}
