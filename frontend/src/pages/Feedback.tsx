@@ -4,13 +4,16 @@ export default function Feedback() {
   const [type, setType] = useState("bug");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const webhookUrl =
+    import.meta.env.VITE_FEEDBACK_WEBHOOK_URL ||
+    "https://hooks.zapier.com/hooks/catch/9663424/uyha48y/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!import.meta.env.VITE_FEEDBACK_WEBHOOK_URL) return;
+    if (!webhookUrl) return;
     setStatus("loading");
     try {
-      await fetch(import.meta.env.VITE_FEEDBACK_WEBHOOK_URL, {
+      await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, description })
