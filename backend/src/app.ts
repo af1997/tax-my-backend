@@ -2,8 +2,8 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 
-import customerRoutes from "./routes/customers.ts";   // ← add .ts
-import invoiceRoutes  from "./routes/invoices.ts";    // ← add .ts
+import customerRoutes from "./routes/customers";
+import invoiceRoutes from "./routes/invoices";
 // (add .ts if you later import jobs.ts, materials.ts, etc.)
 
 const app = express();
