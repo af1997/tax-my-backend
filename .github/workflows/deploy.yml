@@ -19,7 +19,7 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 20
-        cache: npm                # caches ~/.npm for faster installs
+    # cache: npm                # caches ~/.npm for faster installs
     
     # install pnpm globally via npm (rock-solid, always on PATH)
     - name: Install pnpm
