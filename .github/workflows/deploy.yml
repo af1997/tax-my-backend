@@ -15,15 +15,17 @@ jobs:
     # 1. Check out code
     - uses: actions/checkout@v4
 
-    # 2. Set up Node and pnpm (cached)  :contentReference[oaicite:1]{index=1}
+    # 2. Install Node and pnpm
     - uses: actions/setup-node@v4
       with:
         node-version: 20
         cache: pnpm
-
-    - uses: pnpm/action-setup@v4
+    
+    - uses: pnpm/action-setup@v2        # ← v2 is the current tag
       with:
-        version: 8               # or whichever you use
+        version: 8                      # or whatever major you use
+        run_install: false              # we’ll run pnpm install ourselves
+
 
     # 3. Install deps & build ONLY the front-end
     - name: Build front-end
