@@ -15,16 +15,18 @@ jobs:
     # 1. Check out code
     - uses: actions/checkout@v4
 
-    # 2. Install Node and pnpm
+    # 2. Install Node 20 and pnpm 8.x  ───────────────
     - uses: actions/setup-node@v4
       with:
         node-version: 20
-        cache: pnpm
+        cache: 'pnpm'          # speeds up repeated installs
     
-    - uses: pnpm/action-setup@v2        # ← v2 is the current tag
-      with:
-        version: 8                      # or whatever major you use
-        run_install: false              # we’ll run pnpm install ourselves
+    # Install pnpm directly via Corepack (no extra action tag to chase)
+    - name: Enable pnpm
+      run: |
+        corepack enable              # turns pnpm on for this runner
+        corepack prepare pnpm@8 --activate
+        pnpm --version               # sanity check → prints 8.x.x
 
 
     # 3. Install deps & build ONLY the front-end
