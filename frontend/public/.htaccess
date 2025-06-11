@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteBase /frontend/dist
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+RewriteRule ^ index.html [L]
