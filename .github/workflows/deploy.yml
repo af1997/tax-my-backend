@@ -2,48 +2,41 @@ name: Build & Deploy to SiteGround
 
 on:
   push:
-    branches: [main]        # direct pushes
+    branches: [main]
   pull_request:
-    types: [closed]         # runs when a PR is merged
+    types: [closed]
 
 jobs:
   deploy:
-    if: github.event_name == 'push' || github.event.pull_request.merged == true
     runs-on: ubuntu-22.04
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
 
     steps:
-    # 1 – Check out the code
+    # 1 – Check out code
     - uses: actions/checkout@v4
 
-    # 2 – Set up Node + pnpm-aware cache (uses pnpm-lock.yaml)
+    # 2 – Install Node (no cache flag here)
     - uses: actions/setup-node@v4
       with:
         node-version: 20
-        cache: pnpm
 
-    # 3 – Install pnpm and add it to PATH  ← **must precede any pnpm commands**
+    # 3 – Install PNPM *and* restore/save its cache
     - uses: pnpm/action-setup@v2
       with:
         version: 8
+        cache: true            # <-- this handles pnpm-store caching for you
         run_install: false
 
-    # 3-b – DEBUG ─ show where pnpm lives
-    - name: Debug PATH
-      run: |
-        echo "PATH=$PATH"
-        which pnpm || echo "pnpm still missing"
-        pnpm --version || true
-
-    # 4 – (Optional) show the version so you know it’s on PATH
+    # 4 – Prove pnpm is on PATH
     - run: pnpm --version
 
-    # 5 – Install deps & build the front-end
+    # 5 – Install deps & build
     - name: Build front-end
       run: |
         pnpm install --filter frontend --frozen-lockfile
-        pnpm --filter frontend run build         # outputs frontend/dist/
+        pnpm --filter frontend run build            # ➜ frontend/dist/
 
-    # 6 – Rsync the static build to SiteGround
+    # 6 – Deploy to SiteGround via rsync/SSH
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1
       with:
