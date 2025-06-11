@@ -44,6 +44,7 @@ jobs:
         port:     ${{ secrets.SG_PORT }}
         username: ${{ secrets.SG_USER }}
         key:      ${{ secrets.SITEGROUND_SSH_KEY }}
+        passphrase: ${{ secrets.SG_PASSPHRASE }}   # ← add this line
         script: |
           rsync -a --delete --quiet \
             ./frontend/dist/ \
