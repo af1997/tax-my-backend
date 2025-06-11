@@ -8,45 +8,42 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-22.04
     if: github.event_name == 'push' || github.event.pull_request.merged == true
+    runs-on: ubuntu-22.04
 
     steps:
-    # 1 – Check out code
-    - uses: actions/checkout@v4
+      # 1 – check out the repo
+      - uses: actions/checkout@v4
 
-    # 2 – Install Node (no cache flag here)
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      # 2 – Node 20 (no pnpm yet)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    # 3 – Install PNPM *and* restore/save its cache
-    - uses: pnpm/action-setup@v2
-      with:
-        version: 8
-        cache: true            # <-- this handles pnpm-store caching for you
-        run_install: false
+      # 3 – pnpm 8 + cache
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          cache: true          # keyed by pnpm-lock.yaml
+          run_install: false
 
-    # 4 – Prove pnpm is on PATH
-    - run: pnpm --version
+      - run: pnpm --version     # sanity check
 
-    # 5 – Install deps & build
-    - name: Build front-end
-      run: |
-        pnpm install --filter frontend --no-frozen-lockfile
-        pnpm --filter frontend run build            # ➜ frontend/dist/
+      # 4 – install deps + build
+      - name: Build front-end
+        run: |
+          pnpm install --filter frontend --frozen-lockfile   # or --no-frozen-lockfile
+          pnpm --filter frontend run build                   # → frontend/dist/
 
-    # 6 – Deploy dist/* directly into public_html/
-    - name: Deploy via rsync
-      uses: appleboy/rsync-action@v0.0.5
-      with:
-        host:       ${{ secrets.SG_HOST }}
-        port:       ${{ secrets.SG_PORT }}
-        username:   ${{ secrets.SG_USER }}
-        key:        ${{ secrets.SITEGROUND_SSH_KEY }}
-        passphrase: ${{ secrets.SG_PASSPHRASE }}   # remove if key has no passphrase
-        source:     "frontend/dist/"               # trailing / → copy _contents_
-        target:     "/home/${{ secrets.SG_USER }}/www/taxmybackend.com/public_html/"
-        delete:     true                           # purge old files
-        args:       "-avz"                         # verbose + archive + compression
-
+      # 5 – rsync the build to SiteGround
+      - name: Deploy via rsync
+        uses: burnett01/rsync-deployments@5.2
+        with:
+          switches: -avzr --delete          # archive, verbose, compress, delete orphans
+          path: frontend/dist/              # trailing / ⇒ copy *contents* only
+          remote_path: /home/${{ secrets.SG_USER }}/www/taxmybackend.com/public_html/
+          remote_host: ${{ secrets.SG_HOST }}
+          remote_port: ${{ secrets.SG_PORT }}
+          remote_user: ${{ secrets.SG_USER }}
+          remote_key: ${{ secrets.SITEGROUND_SSH_KEY }}
+          remote_key_pass: ${{ secrets.SG_PASSPHRASE }}     # omit if key has no passphrase
