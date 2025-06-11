@@ -2,9 +2,9 @@ name: Build & Deploy to SiteGround
 
 on:
   push:
-    branches: [main]            # direct pushes
+    branches: [main]              # direct pushes
   pull_request:
-    types: [closed]             # fires when a PR is merged
+    types: [closed]               # runs when a PR is merged
 
 jobs:
   deploy:
@@ -12,34 +12,31 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    # 1 – Check out the repo
-    - name: Checkout code
-      uses: actions/checkout@v4
+    # 1 – Check out repo
+    - uses: actions/checkout@v4
 
-    # 2 – Set up Node 20 with pnpm-compatible cache
-    - name: Setup Node 20
-      uses: actions/setup-node@v4
+    # 2 – Set up Node + pnpm cache
+    - uses: actions/setup-node@v4
       with:
         node-version: 20
-        cache: pnpm              # keyed by pnpm-lock.yaml
+        cache: pnpm                # keyed by pnpm-lock.yaml
 
-    # 3 – Install pnpm 8.x and add it to PATH
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
+    # 3 – Install pnpm and add it to PATH  (this **must** precede any pnpm commands)
+    - uses: pnpm/action-setup@v2
       with:
         version: 8
-        run_install: false       # we'll install ourselves
+        run_install: false
 
-    # 4 – Sanity check (shows 8.x.x)
+    # 4 – Quick sanity check
     - run: pnpm --version
 
-    # 5 – Install deps (dev + prod) and build the front-end
+    # 5 – Install deps & build front-end
     - name: Build front-end
       run: |
         pnpm install --filter frontend --frozen-lockfile
-        pnpm --filter frontend run build         # → frontend/dist/
+        pnpm --filter frontend run build        # outputs to frontend/dist/
 
-    # 6 – Rsync the static build to SiteGround
+    # 6 – Deploy the static build to SiteGround
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1
       with:
@@ -51,3 +48,4 @@ jobs:
           rsync -a --delete --quiet \
             ./frontend/dist/ \
             /home/${{ secrets.SG_USER }}/www/taxmybackend.com/public_html/
+
