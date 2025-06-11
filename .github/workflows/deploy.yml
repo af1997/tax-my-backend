@@ -33,7 +33,7 @@ jobs:
     # 5 – Install deps & build
     - name: Build front-end
       run: |
-        pnpm install --filter frontend --frozen-lockfile
+        pnpm install --filter frontend --no-frozen-lockfile
         pnpm --filter frontend run build            # ➜ frontend/dist/
 
     # 6 – Deploy to SiteGround via rsync/SSH
