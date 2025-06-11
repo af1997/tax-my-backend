@@ -1,5 +1,9 @@
 RewriteEngine On
 RewriteBase /
+
+# ① If the request matches an existing file, serve it as-is
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
+
+# ② Otherwise hand everything to index.html
 RewriteRule ^ index.html [L]
