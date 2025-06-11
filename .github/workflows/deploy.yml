@@ -36,15 +36,17 @@ jobs:
         pnpm install --filter frontend --no-frozen-lockfile
         pnpm --filter frontend run build            # ➜ frontend/dist/
 
-    # 6 – Copy the static build to SiteGround
-    - uses: appleboy/scp-action@v0.1.4
+    # 6 – Deploy dist/* directly into public_html/
+    - name: Deploy via rsync
+      uses: appleboy/rsync-action@v0.0.5
       with:
         host:       ${{ secrets.SG_HOST }}
         port:       ${{ secrets.SG_PORT }}
         username:   ${{ secrets.SG_USER }}
         key:        ${{ secrets.SITEGROUND_SSH_KEY }}
-        passphrase: ${{ secrets.SG_PASSPHRASE }}
-        source:     "frontend/dist/*"   # all files inside dist/
+        passphrase: ${{ secrets.SG_PASSPHRASE }}   # remove if key has no passphrase
+        source:     "frontend/dist/"               # trailing / → copy _contents_
         target:     "/home/${{ secrets.SG_USER }}/www/taxmybackend.com/public_html/"
-        overwrite:  true
+        delete:     true                           # purge old files
+        args:       "-avz"                         # verbose + archive + compression
 
