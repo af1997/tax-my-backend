@@ -27,6 +27,13 @@ jobs:
         version: 8
         run_install: false
 
+    # 3-b – DEBUG ─ show where pnpm lives
+    - name: Debug PATH
+      run: |
+        echo "PATH=$PATH"
+        which pnpm || echo "pnpm still missing"
+        pnpm --version || true
+
     # 4 – (Optional) show the version so you know it’s on PATH
     - run: pnpm --version
 
