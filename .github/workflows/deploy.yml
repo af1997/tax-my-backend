@@ -1,17 +1,50 @@
-name: pnpm PATH test
-on: [push]
+name: Build & Deploy to SiteGround
+
+on:
+  push:
+    branches: [main]        # direct pushes
+  pull_request:
+    types: [closed]         # runs when a PR is merged
 
 jobs:
-  test:
+  deploy:
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
     runs-on: ubuntu-22.04
+
     steps:
-      - uses: actions/checkout@v4
+    # 1 – Check out the code
+    - uses: actions/checkout@v4
 
-      # Install pnpm 8 and add to PATH ⬇⬇⬇
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
+    # 2 – Set up Node + pnpm-aware cache (uses pnpm-lock.yaml)
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: pnpm
 
-      # If this step prints 8.x.x the PATH problem is solved
-      - run: pnpm --version
+    # 3 – Install pnpm and add it to PATH  ← **must precede any pnpm commands**
+    - uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        run_install: false
+
+    # 4 – (Optional) show the version so you know it’s on PATH
+    - run: pnpm --version
+
+    # 5 – Install deps & build the front-end
+    - name: Build front-end
+      run: |
+        pnpm install --filter frontend --frozen-lockfile
+        pnpm --filter frontend run build         # outputs frontend/dist/
+
+    # 6 – Rsync the static build to SiteGround
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1
+      with:
+        host:     ${{ secrets.SG_HOST }}
+        port:     ${{ secrets.SG_PORT }}
+        username: ${{ secrets.SG_USER }}
+        key:      ${{ secrets.SITEGROUND_SSH_KEY }}
+        script: |
+          rsync -a --delete --quiet \
+            ./frontend/dist/ \
+            /home/${{ secrets.SG_USER }}/www/taxmybackend.com/public_html/
