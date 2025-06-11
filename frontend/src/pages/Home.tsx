@@ -11,6 +11,9 @@ export default function Home() {
         <Link to="/invoices" className="text-blue-500 hover:underline">
           Invoices
         </Link>
+        <Link to="/customers" className="text-blue-500 hover:underline">
+          Customers
+        </Link>
         <Link to="/feedback" className="text-blue-500 hover:underline">
           Feedback
         </Link>
