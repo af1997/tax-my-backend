@@ -32,9 +32,10 @@ jobs:
     # 3. Install deps & build ONLY the front-end
     - name: Build front-end
       run: |
-        corepack enable          # enables pnpm immediately
-        pnpm install --filter frontend --prod
-        pnpm --filter frontend run build   # generates frontend/dist/
+        # grab EVERY dependency the front-end needs, dev ones included
+        pnpm install --filter frontend --frozen-lockfile
+        pnpm --filter frontend run build
+
 
     # 4. Rsync the static output to SiteGround  :contentReference[oaicite:2]{index=2}
     - name: Deploy via SSH
