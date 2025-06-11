@@ -8,6 +8,7 @@ export default function Feedback() {
     id: number;
     type: string;
     description: string;
+    status: string;
     createdAt: string;
   }[]>([]);
 
@@ -28,7 +29,13 @@ export default function Feedback() {
         body: JSON.stringify({ type, description })
       });
       setEntries((prev) => [
-        { id: Date.now(), type, description, createdAt: new Date().toISOString() },
+        {
+          id: Date.now(),
+          type,
+          description,
+          status: "NEW",
+          createdAt: new Date().toISOString(),
+        },
         ...prev
       ]);
       setDescription("");
@@ -84,6 +91,7 @@ export default function Feedback() {
             <tr className="bg-gray-100">
               <th className="border p-2 text-left">Type</th>
               <th className="border p-2 text-left">Description</th>
+              <th className="border p-2 text-left">Status</th>
               <th className="border p-2 text-left">Created</th>
             </tr>
           </thead>
@@ -92,6 +100,7 @@ export default function Feedback() {
               <tr key={f.id} className="border-t">
                 <td className="p-2 border">{f.type}</td>
                 <td className="p-2 border">{f.description}</td>
+                <td className="p-2 border">{f.status}</td>
                 <td className="p-2 border">
                   {new Date(f.createdAt).toLocaleString()}
                 </td>

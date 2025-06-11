@@ -8,14 +8,20 @@ prisma.$executeRaw`CREATE TABLE IF NOT EXISTS Feedback (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   type TEXT NOT NULL,
   description TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'NEW',
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
 )`;
+// In case the table already existed without the status column
+prisma
+  .$executeRaw`ALTER TABLE Feedback ADD COLUMN status TEXT NOT NULL DEFAULT 'NEW'`
+  .catch(() => {});
 
 r.get("/", async (_, res) => {
   const feedback = await prisma.$queryRaw<{
     id: number;
     type: string;
     description: string;
+    status: string;
     createdAt: string;
   }[]>`SELECT * FROM Feedback ORDER BY id DESC`;
   res.json(feedback);
@@ -27,7 +33,7 @@ r.post("/", async (req, res) => {
     description: string;
   };
   try {
-    await prisma.$executeRaw`INSERT INTO Feedback(type, description) VALUES (${type}, ${description})`;
+    await prisma.$executeRaw`INSERT INTO Feedback(type, description, status) VALUES (${type}, ${description}, 'NEW')`;
   } catch (err) {
     console.error("Failed to store feedback", err);
     return res.status(500).json({ ok: false, error: "Failed to store feedback" });
