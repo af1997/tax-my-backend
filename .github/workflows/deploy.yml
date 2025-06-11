@@ -1,0 +1,46 @@
+name: Build & Deploy to SiteGround
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [closed]   # fires when a PR is merged
+
+jobs:
+  deploy:
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    runs-on: ubuntu-22.04
+
+    steps:
+    # 1. Check out code
+    - uses: actions/checkout@v4
+
+    # 2. Set up Node and pnpm (cached)  :contentReference[oaicite:1]{index=1}
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: pnpm
+
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 8               # or whichever you use
+
+    # 3. Install deps & build ONLY the front-end
+    - name: Build front-end
+      run: |
+        corepack enable          # enables pnpm immediately
+        pnpm install --filter frontend --prod
+        pnpm --filter frontend run build   # generates frontend/dist/
+
+    # 4. Rsync the static output to SiteGround  :contentReference[oaicite:2]{index=2}
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1
+      with:
+        host:     ${{ secrets.SG_HOST }}
+        port:     ${{ secrets.SG_PORT }}
+        username: ${{ secrets.SG_USER }}
+        key:      ${{ secrets.SITEGROUND_SSH_KEY }}
+        script: |
+          rsync -a --delete --quiet \
+            ./frontend/dist/ \
+            /home/${{ secrets.SG_USER }}/www/taxmybackend.com/public_html/
