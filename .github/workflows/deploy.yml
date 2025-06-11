@@ -2,42 +2,39 @@ name: Build & Deploy to SiteGround
 
 on:
   push:
-    branches: [main]
+    branches: [main]            # direct pushes
   pull_request:
-    types: [closed]   # fires when a PR is merged
+    types: [closed]             # merged PRs
 
 jobs:
   deploy:
+    # only run when the push is to main OR a PR was merged
     if: github.event_name == 'push' || github.event.pull_request.merged == true
     runs-on: ubuntu-22.04
 
     steps:
-    # 1. Check out code
-    - uses: actions/checkout@v4
+    # 1 – Check out the repo
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    # 2. Install Node 20 and globally install pnpm 8.x ──────────────
-    - uses: actions/setup-node@v4
+    # 2 – Set up Node 20 and enable the pnpm cache
+    - name: Setup Node 20 + pnpm cache
+      uses: actions/setup-node@v4
       with:
         node-version: 20
-    # cache: npm                # caches ~/.npm for faster installs
-    
-    # install pnpm globally via npm (rock-solid, always on PATH)
+        cache: pnpm          # uses pnpm-lock.yaml for a deterministic cache key
+
+    # 3 – Install pnpm globally (always ends up on PATH)
     - name: Install pnpm
       run: npm install -g pnpm@8
-    
-    # quick sanity check
-    - run: pnpm --version
 
-
-    # 3. Install deps & build ONLY the front-end
+    # 4 – Install deps & build the front-end
     - name: Build front-end
       run: |
-        # grab EVERY dependency the front-end needs, dev ones included
         pnpm install --filter frontend --frozen-lockfile
-        pnpm --filter frontend run build
+        pnpm --filter frontend run build     # produces frontend/dist/
 
-
-    # 4. Rsync the static output to SiteGround  :contentReference[oaicite:2]{index=2}
+    # 5 – Sync the static build to SiteGround
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1
       with:
