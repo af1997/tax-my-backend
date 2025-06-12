@@ -32,7 +32,7 @@ export default function Feedback() {
     setErrorMsg(null);
 
     try {
-      const res = await fetch("/api/feedback.php", {
+      const res = await fetch("/public_html/api/feedback.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
