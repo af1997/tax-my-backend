@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Invoices from "./pages/Invoices";
 import Feedback from "./pages/Feedback";
 import Customers from "./pages/Customers";
+import Test from "./pages/Test";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/invoices/*" element={<Invoices />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/feedback" element={<Feedback />} />
+        <Route path="/test" element={<Test />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
