@@ -4,16 +4,17 @@ export default function Feedback() {
   const [type, setType] = useState("bug");
   const [note, setNote] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [entries, setEntries] = useState<{
     id: number;
     type: string;
-    note: string;
-    prompt: string | null;
+    description: string;
     status: string;
+    createdAt: string;
   }[]>([]);
 
   useEffect(() => {
-    fetch("/api/feedback.php")
+    fetch("/api/feedback")
       .then((res) => res.json())
       .then(setEntries)
       .catch(() => {});
@@ -22,29 +23,28 @@ export default function Feedback() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
+    setErrorMsg(null);
     try {
-      const res = await fetch("/api/feedback.php", {
+      const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, note })
+        body: JSON.stringify({ type, description: note }),
       });
-      if (!res.ok) throw new Error("Request failed");
       const data = await res.json();
-      setEntries((prev) => [
-        {
-          id: data.id,
-          type,
-          note,
-          prompt: null,
-          status: "open",
-        },
-        ...prev
-      ]);
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || "Request failed");
+      }
+      fetch("/api/feedback")
+        .then((r) => r.json())
+        .then(setEntries)
+        .catch(() => {});
       setNote("");
       setType("bug");
       setStatus("success");
-    } catch {
+    } catch (err) {
       setStatus("error");
+      if (err instanceof Error) setErrorMsg(err.message);
+      else setErrorMsg("Unknown error");
     }
   };
 
@@ -84,7 +84,7 @@ export default function Feedback() {
           <p className="text-green-600">Thank you for your feedback!</p>
         )}
         {status === "error" && (
-          <p className="text-red-600">Something went wrong. Please try again.</p>
+          <p className="text-red-600">{errorMsg ?? "Something went wrong. Please try again."}</p>
         )}
       </form>
       {entries.length > 0 && (
@@ -92,18 +92,18 @@ export default function Feedback() {
           <thead>
             <tr className="bg-gray-100">
               <th className="border p-2 text-left">Type</th>
-              <th className="border p-2 text-left">Note</th>
-              <th className="border p-2 text-left">Prompt</th>
+              <th className="border p-2 text-left">Description</th>
               <th className="border p-2 text-left">Status</th>
+              <th className="border p-2 text-left">Created</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((f) => (
               <tr key={f.id} className="border-t">
                 <td className="p-2 border">{f.type}</td>
-                <td className="p-2 border">{f.note}</td>
-                <td className="p-2 border">{f.prompt ?? ""}</td>
+                <td className="p-2 border">{f.description}</td>
                 <td className="p-2 border">{f.status}</td>
+                <td className="p-2 border">{new Date(f.createdAt).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
