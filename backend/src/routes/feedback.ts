@@ -60,4 +60,17 @@ r.post("/", async (req, res) => {
   res.json({ ok: true });
 });
 
+// update status open/closed
+r.patch("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body as { status: string };
+  try {
+    await prisma.$executeRaw`UPDATE Feedback SET status=${status} WHERE id=${Number(id)}`;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Failed to update feedback status", err);
+    res.status(500).json({ ok: false, error: "Failed to update status" });
+  }
+});
+
 export default r;
