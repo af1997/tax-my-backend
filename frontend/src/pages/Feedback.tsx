@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 
 export default function Feedback() {
   const [type, setType] = useState("bug");
-  const [description, setDescription] = useState("");
+  const [note, setNote] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [entries, setEntries] = useState<{
     id: number;
     type: string;
-    description: string;
+    note: string;
+    prompt: string | null;
     status: string;
-    createdAt: string;
   }[]>([]);
 
   useEffect(() => {
-    fetch("/api/feedback")
+    fetch("/api/feedback.php")
       .then((res) => res.json())
       .then(setEntries)
       .catch(() => {});
@@ -23,22 +23,24 @@ export default function Feedback() {
     e.preventDefault();
     setStatus("loading");
     try {
-      await fetch("/api/feedback", {
+      const res = await fetch("/api/feedback.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, description })
+        body: JSON.stringify({ type, note })
       });
+      if (!res.ok) throw new Error("Request failed");
+      const data = await res.json();
       setEntries((prev) => [
         {
-          id: Date.now(),
+          id: data.id,
           type,
-          description,
-          status: "NEW",
-          createdAt: new Date().toISOString(),
+          note,
+          prompt: null,
+          status: "open",
         },
         ...prev
       ]);
-      setDescription("");
+      setNote("");
       setType("bug");
       setStatus("success");
     } catch {
@@ -62,10 +64,10 @@ export default function Feedback() {
           </select>
         </div>
         <div>
-          <label className="block mb-1 font-medium">Description</label>
+          <label className="block mb-1 font-medium">Note</label>
           <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
             className="border rounded p-2 w-full"
             rows={4}
             required
@@ -90,20 +92,18 @@ export default function Feedback() {
           <thead>
             <tr className="bg-gray-100">
               <th className="border p-2 text-left">Type</th>
-              <th className="border p-2 text-left">Description</th>
+              <th className="border p-2 text-left">Note</th>
+              <th className="border p-2 text-left">Prompt</th>
               <th className="border p-2 text-left">Status</th>
-              <th className="border p-2 text-left">Created</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((f) => (
               <tr key={f.id} className="border-t">
                 <td className="p-2 border">{f.type}</td>
-                <td className="p-2 border">{f.description}</td>
+                <td className="p-2 border">{f.note}</td>
+                <td className="p-2 border">{f.prompt ?? ""}</td>
                 <td className="p-2 border">{f.status}</td>
-                <td className="p-2 border">
-                  {new Date(f.createdAt).toLocaleString()}
-                </td>
               </tr>
             ))}
           </tbody>
