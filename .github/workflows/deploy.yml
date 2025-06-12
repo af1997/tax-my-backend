@@ -39,7 +39,7 @@ jobs:
       - name: Deploy via rsync
         uses: burnett01/rsync-deployments@5.2
         with:
-          switches: -avzr --delete          # archive, verbose, compress, delete orphans
+          switches: -avzr --delete --exclude='api/'         # archive, verbose, compress, delete orphans
           path: frontend/dist/              # trailing / ⇒ copy *contents* only
           remote_path: /home/${{ secrets.SG_USER }}/www/taxmybackend.com/public_html/
           remote_host: ${{ secrets.SG_HOST }}
