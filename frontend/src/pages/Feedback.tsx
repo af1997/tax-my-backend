@@ -24,16 +24,17 @@ export default function Feedback() {
   const toggleStatus = async (entry: Entry) => {
     const newStatus = entry.status === "open" ? "closed" : "open";
     try {
-      await fetch(`/api/feedback/${entry.id}`, {
-        method: "PATCH",
+      await fetch("/api/feedback.php", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ id: entry.id, status: newStatus }),
       });
-      fetchEntries();
+      fetchEntries();      // refresh list
     } catch {
-      // ignore errors for now
+      /* ignore errors for now */
     }
   };
+
 
   /* ------------------------------------------------------------------ */
   /** fetch all rows */
