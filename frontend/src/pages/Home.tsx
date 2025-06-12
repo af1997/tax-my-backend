@@ -17,6 +17,9 @@ export default function Home() {
         <Link to="/feedback" className="text-blue-500 hover:underline">
           Feedback
         </Link>
+        <Link to="/test" className="text-blue-500 hover:underline">
+          Test
+        </Link>
       </nav>
     </div>
   );
