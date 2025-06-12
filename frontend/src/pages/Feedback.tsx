@@ -5,27 +5,46 @@ type Entry = {
   type: "bug" | "feature";
   note: string;
   status: "open" | "closed";
-  created?: string;               // adjust if your column is named differently
+  created?: string; // ISO string from DB
 };
 
 export default function Feedback() {
+  /* form state */
   const [type, setType] = useState<"bug" | "feature">("bug");
   const [note, setNote] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
+
+  /* request / ui state */
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  /* table data */
   const [entries, setEntries] = useState<Entry[]>([]);
 
-  /** fetch all rows once on mount */
-  useEffect(() => {
+  /* ------------------------------------------------------------------ */
+  /** fetch all rows */
+  const fetchEntries = () =>
     fetch("/api/feedback.php")
-      .then((res) => res.json())
+      .then((r) => r.json())
+      .then((rows: any[]) =>
+        // map DB keys → Entry (rename created_at → created, etc.)
+        rows.map((r) => ({
+          id: r.id,
+          type: r.type,
+          note: r.note,
+          status: r.status,
+          created: r.created ?? r.created_at ?? undefined,
+        })) as Entry[]
+      )
       .then(setEntries)
-      .catch(() => {}); // ignore initial load error
+      .catch(() => {}); // swallow initial load errors silently
+
+  /* load once on mount */
+  useEffect(() => {
+    fetchEntries();
   }, []);
 
-  /** form submit handler */
+  /* ------------------------------------------------------------------ */
+  /** submit handler */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
@@ -37,8 +56,8 @@ export default function Feedback() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type,
-          note,                // php expects "note"
-          prompt: null,        // optional for future AI use
+          note,
+          prompt: "", // send empty string (column allows NULL, but this is fine)
           status: "open",
         }),
       });
@@ -48,18 +67,10 @@ export default function Feedback() {
         throw new Error(data.error || "Request failed");
       }
 
-      // optimistic: add the new row locally
-      setEntries((prev) => [
-        {
-          id: data.id,
-          type,
-          note,
-          status: "open",
-          created: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
+      /* refresh list from DB so we show server-truth */
+      await fetchEntries();
 
+      /* reset form */
       setNote("");
       setType("bug");
       setStatus("success");
@@ -69,6 +80,7 @@ export default function Feedback() {
     }
   };
 
+  /* ------------------------------------------------------------------ */
   return (
     <div className="max-w-xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Feedback</h1>
@@ -79,9 +91,7 @@ export default function Feedback() {
           <label className="block mb-1 font-medium">Type</label>
           <select
             value={type}
-            onChange={(e) =>
-              setType(e.target.value as "bug" | "feature")
-            }
+            onChange={(e) => setType(e.target.value as "bug" | "feature")}
             className="border rounded p-2 w-full"
           >
             <option value="bug">Bug</option>
@@ -119,7 +129,7 @@ export default function Feedback() {
       </form>
 
       {/* TABLE */}
-      {entries.length > 0 && (
+      {entries.length > 0 ? (
         <table className="mt-8 w-full border text-sm">
           <thead>
             <tr className="bg-gray-100">
@@ -144,6 +154,8 @@ export default function Feedback() {
             ))}
           </tbody>
         </table>
+      ) : (
+        <p className="mt-8 text-gray-600">No feedback yet.</p>
       )}
     </div>
   );
