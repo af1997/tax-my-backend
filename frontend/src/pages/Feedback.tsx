@@ -20,6 +20,21 @@ export default function Feedback() {
   /* table data */
   const [entries, setEntries] = useState<Entry[]>([]);
 
+  /** toggle status for a single entry */
+  const toggleStatus = async (entry: Entry) => {
+    const newStatus = entry.status === "open" ? "closed" : "open";
+    try {
+      await fetch(`/api/feedback/${entry.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      fetchEntries();
+    } catch {
+      // ignore errors for now
+    }
+  };
+
   /* ------------------------------------------------------------------ */
   /** fetch all rows */
   const fetchEntries = () =>
@@ -137,6 +152,7 @@ export default function Feedback() {
               <th className="border p-2 text-left">Note</th>
               <th className="border p-2 text-left">Status</th>
               <th className="border p-2 text-left">Created</th>
+              <th className="border p-2 text-left">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -149,6 +165,14 @@ export default function Feedback() {
                   {f.created
                     ? new Date(f.created).toLocaleString()
                     : "-"}
+                </td>
+                <td className="p-2 border text-center">
+                  <button
+                    className="text-blue-500 hover:underline"
+                    onClick={() => toggleStatus(f)}
+                  >
+                    {f.status === "open" ? "Close" : "Reopen"}
+                  </button>
                 </td>
               </tr>
             ))}
