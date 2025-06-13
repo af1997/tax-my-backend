@@ -172,7 +172,7 @@ export default function Feedback() {
                     className="text-blue-500 hover:underline"
                     onClick={() => toggleStatus(f)}
                   >
-                    {f.status === "open" ? "Close" : "Reopen"}
+                    {f.status === "Open" ? "Closed" : "Reopen"}
                   </button>
                 </td>
               </tr>
