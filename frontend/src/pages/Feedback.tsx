@@ -47,7 +47,9 @@ export default function Feedback() {
           id: r.id,
           type: r.type,
           note: r.note,
-          status: r.status,
+          status: (r.status ?? '').trim().toLowerCase() === 'open'
+                  ? 'open'
+                  : 'closed',               // anything else → closed
           created: r.created ?? r.created_at ?? undefined,
         })) as Entry[]
       )
